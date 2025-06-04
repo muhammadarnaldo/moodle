@@ -349,15 +349,19 @@ final class question_test extends \advanced_testcase {
         $this->assertEquals($expected, $actual);
     }
 
+    /**
+     * Test that a less-than symbol attached to a word ('<1.') in plain text
+     * is handled correctly and doesn't trigger HTML validation errors.
+     */
     public function test_get_validation_error_plain_text_with_html_chars(): void {
         $question = \test_question_maker::make_an_essay_question();
         $question->responseformat = 'plain';
         $question->responserequired = 1;
-        $question->minwordlimit = 3;
-        $question->maxwordlimit = 3;
+        $question->minwordlimit = 2;
+        $question->maxwordlimit = 2;
 
-        $this->assertEquals('', $question->get_validation_error(
-            ['answer' => 'x < 1.', 'answerformat' => FORMAT_PLAIN]));
+        $response = ['answer' => 'x <1.', 'answerformat' => FORMAT_PLAIN];
+        $this->assertEquals('', $question->get_validation_error($response));
     }
 
     /**
@@ -396,20 +400,29 @@ final class question_test extends \advanced_testcase {
         $this->assertEquals($expected, $question->get_word_count_message_for_review($response));
     }
 
+    /**
+     * Test word count calculation when input contains less-than symbols.
+     *
+     * Verifies that words with leading less-than symbols (like '<1.' or '<adjacent')
+     * are counted correctly and don't affect word boundary detection.
+     */
     public function test_get_word_count_message_for_review_plain_text_with_html_chars(): void {
         $question = \test_question_maker::make_an_essay_question();
         $question->responseformat = 'plain';
         $question->responserequired = 1;
-        $question->minwordlimit = 3;
-        $question->maxwordlimit = 3;
+        $question->minwordlimit = 2;
+        $question->maxwordlimit = 2;
 
-        $this->assertEquals('Word count: 3', $question->get_word_count_message_for_review(
-            ['answer' => 'x < 1.', 'answerformat' => FORMAT_PLAIN]));
-        $this->assertEquals('Word count: 8, more than the limit of 3 words',
-            $question->get_word_count_message_for_review([
-                'answer' => 'What about an <adjacent to the following word?',
-                'answerformat' => FORMAT_PLAIN,
-            ]));
+        $expected = 'Word count: 2';
+        $response = ['answer' => 'x <1.', 'answerformat' => FORMAT_PLAIN];
+        $this->assertEquals($expected, $question->get_word_count_message_for_review($response));
+
+        $expected = 'Word count: 8, more than the limit of 2 words.';
+        $response = [
+            'answer' => 'What about an <adjacent to the following word?',
+            'answerformat' => FORMAT_PLAIN,
+        ];
+        $this->assertEquals($expected, $question->get_word_count_message_for_review($response));
     }
 
     /**
