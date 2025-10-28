@@ -835,24 +835,32 @@ class rating_manager {
         }
 
         // If userid is not 0 we only want the grade for a single user.
-        $singleuserwhere = '';
+        // For single user requests, use LEFT JOIN to include users even if they have no ratings.
+        // This ensures we return a result when a user's ratings have been deleted.
         if ($options->userid != 0) {
-            $params['userid1'] = intval($options->userid);
-            $singleuserwhere = "AND i.{$itemtableusercolumn} = :userid1";
+            $params['userid'] = intval($options->userid);
+            $sql = "SELECT u.id, u.id AS userid, {$aggregationstring}(r.rating) AS rawgrade
+                FROM {user} u
+                LEFT JOIN {{$itemtable}} i ON u.id = i.{$itemtableusercolumn}
+                LEFT JOIN {rating} r ON r.itemid = i.id
+                    AND r.contextid = :contextid
+                    AND r.component = :component
+                    AND r.ratingarea = :ratingarea
+                WHERE u.id = :userid
+                GROUP BY u.id";
+        } else {
+            // MDL-24648 The where line used to be "WHERE (r.contextid is null or r.contextid=:contextid)".
+            // r.contextid will be null for users who haven't been rated yet.
+            // No longer including users who haven't been rated to reduce memory requirements.
+            $sql = "SELECT u.id, u.id AS userid, {$aggregationstring}(r.rating) AS rawgrade
+                FROM {user} u
+                JOIN {{$itemtable}} i ON u.id = i.{$itemtableusercolumn}
+                JOIN {rating} r ON r.itemid = i.id
+                WHERE r.contextid = :contextid
+                    AND r.component = :component
+                    AND r.ratingarea = :ratingarea
+                GROUP BY u.id";
         }
-
-        // MDL-24648 The where line used to be "WHERE (r.contextid is null or r.contextid=:contextid)".
-        // r.contextid will be null for users who haven't been rated yet.
-        // No longer including users who haven't been rated to reduce memory requirements.
-        $sql = "SELECT u.id as id, u.id AS userid, {$aggregationstring}({$aggregationfield}) AS rawgrade
-                  FROM {user} u
-             LEFT JOIN {{$itemtable}} i ON u.id=i.{$itemtableusercolumn}
-             LEFT JOIN {rating} r ON r.itemid=i.id
-                 WHERE r.contextid = :contextid AND
-                       r.component = :component AND
-                       r.ratingarea = :ratingarea
-                       $singleuserwhere
-              GROUP BY u.id";
         $results = $DB->get_records_sql($sql, $params);
 
         if ($results) {
