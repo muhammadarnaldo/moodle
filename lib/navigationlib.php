@@ -2441,6 +2441,10 @@ class global_navigation extends navigation_node {
 
             // If activity is a delegated section, load a section node instead of the activity one.
             if ($activitydata->delegatedsection) {
+                $format = course_get_format($activitydata->delegatedsection->course);
+                if (!$format->is_section_visible($activitydata->delegatedsection)) {
+                    continue;
+                }
                 $activitynodes[$activitydata->id] = $this->load_section_navigation(
                     parentnode: $sectionnode,
                     section: $activitydata->delegatedsection,
