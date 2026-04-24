@@ -519,6 +519,8 @@ class core_course_renderer extends plugin_renderer_base {
             $url = moodle_url::make_file_url("$CFG->wwwroot/pluginfile.php",
                 '/' . $file->get_contextid() . '/' . $file->get_component() . '/' .
                 $file->get_filearea() . $file->get_filepath() . $file->get_filename(), !$isimage);
+            $url->param('oid', $file->get_timemodified());
+
             if ($isimage) {
                 $contentimages .= html_writer::tag('div',
                     html_writer::empty_tag('img', ['src' => $url, 'alt' => '']),

@@ -30,6 +30,7 @@ use core_course\cache\course_image;
  * @author     Dmitrii Metelkin <dmitriim@catalyst-au.net>
  * @copyright  2021 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \core_course\cache\course_image
  */
 final class course_image_cache_test extends \advanced_testcase {
 
@@ -76,11 +77,13 @@ final class course_image_cache_test extends \advanced_testcase {
      *
      * @param \stdClass $course Course object.
      * @param string $filename File name.
+     * @param int $timemodified File timemodified timestamp for cache-busting.
      * @return string
      */
-    protected function build_expected_course_image_url(\stdClass $course, string $filename): string {
+    protected function build_expected_course_image_url(\stdClass $course, string $filename, int $timemodified): string {
         $contextid = context_course::instance($course->id)->id;
-        return 'https://www.example.com/moodle/pluginfile.php/' . $contextid. '/course/overviewfiles/' . $filename;
+        return 'https://www.example.com/moodle/pluginfile.php/' . $contextid .
+            '/course/overviewfiles/' . $filename . '?oid=' . $timemodified;
     }
 
     /**
@@ -129,7 +132,9 @@ final class course_image_cache_test extends \advanced_testcase {
             'filename1.jpg' => file_get_contents(self::get_fixture_path(__NAMESPACE__, 'image.jpg')),
         ]);
         $course1 = $this->getDataGenerator()->create_course(['overviewfiles_filemanager' => $draftid1]);
-        $expected = $this->build_expected_course_image_url($course1, 'filename1.jpg');
+        $contextid = context_course::instance($course1->id)->id;
+        $file = get_file_storage()->get_file($contextid, 'course', 'overviewfiles', 0, '/', 'filename1.jpg');
+        $expected = $this->build_expected_course_image_url($course1, 'filename1.jpg', $file->get_timemodified());
         $this->assertEquals($expected, $method->invokeArgs($cache, [$course1]));
     }
 
@@ -146,8 +151,9 @@ final class course_image_cache_test extends \advanced_testcase {
             'filename2.jpg' => file_get_contents(self::get_fixture_path(__NAMESPACE__, 'image.jpg')),
         ]);
         $course1 = $this->getDataGenerator()->create_course(['overviewfiles_filemanager' => $draftid1]);
-
-        $expected = $this->build_expected_course_image_url($course1, 'filename1.jpg');
+        $contextid = context_course::instance($course1->id)->id;
+        $file = get_file_storage()->get_file($contextid, 'course', 'overviewfiles', 0, '/', 'filename1.jpg');
+        $expected = $this->build_expected_course_image_url($course1, 'filename1.jpg', $file->get_timemodified());
         $this->assertEquals($expected, $method->invokeArgs($cache, [$course1]));
     }
 
@@ -165,9 +171,44 @@ final class course_image_cache_test extends \advanced_testcase {
             'filename3.jpg' => file_get_contents(self::get_fixture_path(__NAMESPACE__, 'image.jpg')),
         ]);
         $course1 = $this->getDataGenerator()->create_course(['overviewfiles_filemanager' => $draftid1]);
-
-        $expected = $this->build_expected_course_image_url($course1, 'filename2.jpg');
+        $contextid = context_course::instance($course1->id)->id;
+        $file = get_file_storage()->get_file($contextid, 'course', 'overviewfiles', 0, '/', 'filename2.jpg');
+        $expected = $this->build_expected_course_image_url($course1, 'filename2.jpg', $file->get_timemodified());
         $this->assertEquals($expected, $method->invokeArgs($cache, [$course1]));
     }
 
+    /**
+     * Test that replacing a course image with a file of the same name produces a different URL.
+     */
+    public function test_get_image_url_changes_when_file_replaced_with_same_name(): void {
+        $method = new ReflectionMethod(course_image::class, 'get_image_url_from_overview_files');
+        $cache = course_image::get_instance_for_cache(new definition());
+        $imagecontent = file_get_contents(self::get_fixture_path(__NAMESPACE__, 'image.jpg'));
+
+        // Create course with initial image.
+        $draftid = $this->fill_draft_area(['image.jpg' => $imagecontent]);
+        $course = $this->getDataGenerator()->create_course(['overviewfiles_filemanager' => $draftid]);
+
+        $contextid = context_course::instance($course->id)->id;
+        $fs = get_file_storage();
+        $originalfile = $fs->get_file($contextid, 'course', 'overviewfiles', 0, '/', 'image.jpg');
+        $url1 = $method->invokeArgs($cache, [$course])->out_as_local_url();
+
+        // Simulate file replacement with same name: delete original, re-create with a later timemodified.
+        $newrecord = [
+            'contextid'   => $contextid,
+            'component'   => 'course',
+            'filearea'    => 'overviewfiles',
+            'itemid'      => 0,
+            'filepath'    => '/',
+            'filename'    => 'image.jpg',
+            'timemodified' => $originalfile->get_timemodified() + 1,
+        ];
+        $originalfile->delete();
+        $fs->create_file_from_string($newrecord, $imagecontent);
+
+        $url2 = $method->invokeArgs($cache, [$course])->out_as_local_url();
+
+        $this->assertNotEquals($url1, $url2, 'URL must change when course image is replaced with a file of the same name.');
+    }
 }
