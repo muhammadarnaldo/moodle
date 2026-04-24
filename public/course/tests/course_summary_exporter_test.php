@@ -64,8 +64,10 @@ final class course_summary_exporter_test extends \advanced_testcase {
         $fs->create_file_from_string($filerecord, file_get_contents(self::get_fixture_path(__NAMESPACE__, 'image.jpg')));
         $course = $this->getDataGenerator()->create_course(['overviewfiles_filemanager' => $draftid]);
         $coursecontext = context_course::instance($course->id);
+        $storedfile = get_file_storage()->get_file($coursecontext->id, 'course', 'overviewfiles', 0, '/', 'image.jpg');
 
-        $expected = 'https://www.example.com/moodle/pluginfile.php/' . $coursecontext->id . '/course/overviewfiles/image.jpg';
+        $expected = 'https://www.example.com/moodle/pluginfile.php/' . $coursecontext->id .
+            '/course/overviewfiles/image.jpg?oid=' . $storedfile->get_timemodified();
         $actual = course_summary_exporter::get_course_image($course);
         $this->assertSame($expected, $actual);
     }

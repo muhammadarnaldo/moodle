@@ -74,7 +74,7 @@ class course_image implements data_source_interface {
         $courseinlist = new core_course_list_element($course);
         foreach ($courseinlist->get_course_overviewfiles() as $file) {
             if ($file->is_valid_image()) {
-                return moodle_url::make_pluginfile_url(
+                $url = moodle_url::make_pluginfile_url(
                     $file->get_contextid(),
                     $file->get_component(),
                     $file->get_filearea(),
@@ -82,6 +82,8 @@ class course_image implements data_source_interface {
                     $file->get_filepath(),
                     $file->get_filename()
                 );
+                $url->param('oid', $file->get_timemodified());
+                return $url;
             }
         }
 
