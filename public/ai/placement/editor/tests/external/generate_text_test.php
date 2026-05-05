@@ -26,6 +26,50 @@ namespace aiplacement_editor\external;
  */
 final class generate_text_test extends \advanced_testcase {
     /**
+     * Test generate_text webservice with think tags in the response.
+     */
+    public function test_execute_with_think_tags(): void {
+        $this->resetAfterTest();
+        set_config('enabled', 1, 'aiplacement_editor');
+        $this->setAdminUser();
+
+        $context = \core\context\system::instance();
+
+        $generatedcontent = '<think>Some internal reasoning.</think>The actual response.';
+
+        $response = new \core_ai\aiactions\responses\response_generate_text(success: true);
+        $response->set_response_data(
+            [
+                'generatedcontent' => $generatedcontent,
+                'finishreason' => 'stop',
+            ]
+        );
+
+        $mockmanager = $this->createMock(\core_ai\manager::class);
+        $mockmanager->method('process_action')->willReturn($response);
+        $mockmanager->method('is_action_available')->willReturn(true);
+        $mockmanager->method('is_action_enabled')->willReturn(true);
+        $mockmanager->method('is_action_enabled_in_context')->willReturn(true);
+        \core\di::set(\core_ai\manager::class, function () use ($mockmanager) {
+            return $mockmanager;
+        });
+
+        $_POST['sesskey'] = sesskey();
+        $params = [
+            'contextid' => $context->id,
+            'prompttext' => 'Say hello.',
+        ];
+
+        $result = \core_external\external_api::call_external_function(
+            'aiplacement_editor_generate_text',
+            $params,
+        );
+
+        $this->assertFalse($result['error']);
+        $this->assertEquals('The actual response.', $result['data']['generatedcontent']);
+    }
+
+    /**
      * Test generate_text webservice.
      */
     public function test_execute(): void {
