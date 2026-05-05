@@ -72,6 +72,11 @@ class response_summarise_text extends response_base {
         $this->id = $response['id'] ?? null;
         $this->fingerprint = $response['fingerprint'] ?? null;
         $this->generatedcontent = $response['generatedcontent'] ?? null;
+        if ($this->generatedcontent !== null) {
+            $this->generatedcontent = trim(
+                preg_replace('/<think>.*?<\/think>/is', '', $this->generatedcontent) ?? $this->generatedcontent
+            );
+        }
         $this->finishreason = $response['finishreason'] ?? null;
         $this->prompttokens = $response['prompttokens'] ?? null;
         $this->completiontokens = $response['completiontokens'] ?? null;
