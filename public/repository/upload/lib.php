@@ -169,6 +169,11 @@ class repository_upload extends repository {
             }
         }
 
+        // Validate file name length before closing session.
+        if (core_text::strlen($record->filename) > 255) {
+            throw new moodle_exception('filenametoolong', 'repository');
+        }
+
         // Validate file type before closing session.
         if ($this->mimetypes != '*') {
             // Check filetype.

@@ -273,11 +273,14 @@ M.form_filemanager.init = function(Y, options) {
             if (errorCode === 'invalidfiletype') {
                 header = M.util.get_string('invalidfiletypetitle', 'repository');
             }
+            if (errorCode === 'filenametoolong') {
+                header = M.util.get_string('filenametoolongtitle', 'repository');
+            }
             if (!this.msg_dlg) {
                 this.msg_dlg_node = Y.Node.create(M.form_filemanager.templates.message);
                 var nodeid = this.msg_dlg_node.generateID();
                 var previousActiveElement = null;
-                if (typeof options.previousActiveElement != 'undefined') {
+                if (options && typeof options.previousActiveElement != 'undefined') {
                     previousActiveElement = options.previousActiveElement;
                 }
                 this.msg_dlg = new M.core.dialogue({
@@ -858,6 +861,10 @@ M.form_filemanager.init = function(Y, options) {
             } else {
                 if (!newfilename) {
                     this.print_msg(M.util.get_string('enternewname', 'repository'), 'error');
+                    return;
+                }
+                if (Array.from(newfilename).length > 255) {
+                    this.print_msg(M.util.get_string('filenametoolong', 'repository'), 'error', options, 'filenametoolong');
                     return;
                 }
 

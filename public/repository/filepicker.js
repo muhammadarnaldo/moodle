@@ -706,19 +706,6 @@ M.core_filepicker.init = function(Y, options) {
                     }
                     if (data) {
                         if (data.error) {
-                            if (data.errorcode === 'invalidfiletypewithaccepted') {
-                                // File type errors are not really errors, so report them less scarily.
-                                Y.use('moodle-core-notification-alert', function() {
-                                    return new M.core.alert({
-                                        title: M.util.get_string('invalidfiletypetitle', 'repository'),
-                                        message: data.error,
-                                    });
-                                });
-                            } else {
-                                Y.use('moodle-core-notification-ajaxexception', function() {
-                                    return new M.core.ajaxException(data);
-                                });
-                            }
                             if (args.hasOwnProperty('callbackUploadFinished')) {
                                 args.callbackUploadFinished();
                             }
@@ -727,6 +714,26 @@ M.core_filepicker.init = function(Y, options) {
                             } else {
                                 // Blank the dialogue to ensure it is not left in an inconsistent state.
                                 scope.fpnode.one('.fp-content').setContent('');
+                            }
+                            // Report the problem once the file picker has settled, otherwise restoring it would
+                            // stack the picker on top of the message.
+                            var friendlytitles = {
+                                invalidfiletypewithaccepted: 'invalidfiletypetitle',
+                                filenametoolong: 'filenametoolongtitle',
+                            };
+                            if (friendlytitles[data.errorcode]) {
+                                // Problems with the chosen file are not really errors, so report them less scarily.
+                                var titlekey = friendlytitles[data.errorcode];
+                                Y.use('moodle-core-notification-alert', function() {
+                                    return new M.core.alert({
+                                        title: M.util.get_string(titlekey, 'repository'),
+                                        message: data.error,
+                                    });
+                                });
+                            } else {
+                                Y.use('moodle-core-notification-ajaxexception', function() {
+                                    return new M.core.ajaxException(data);
+                                });
                             }
                             return;
                         }
