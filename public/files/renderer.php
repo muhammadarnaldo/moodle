@@ -123,6 +123,8 @@ class core_files_renderer extends plugin_renderer_base {
                 ['updatefileextensiontitle', 'repository'],
                 ['originalextensionchange', 'repository'],
                 ['invalidfiletypetitle', 'repository'],
+                ['filenametoolong', 'repository'],
+                ['filenametoolongtitle', 'repository'],
             )
         );
         if ($this->page->requires->should_create_one_time_item_now('core_file_managertemplate')) {

@@ -688,11 +688,25 @@ M.core_filepicker.init = function(Y, options) {
                         }
                         // error checking
                         if (data && data.error) {
-                            if (data.errorcode === 'invalidfiletypewithaccepted') {
-                                // File type errors are not really errors, so report them less scarily.
+                            if (args.onerror) {
+                                args.onerror(id, data, p);
+                            } else {
+                                // Don't know what to do, so blank the dialogue to ensure it is not left in an inconsistent state.
+                                // This is not great. The user needs to re-click 'Upload file' to reset the display.
+                                this.fpnode.one('.fp-content').setContent('');
+                            }
+                            // Report the problem once the file picker has settled, otherwise restoring it would
+                            // stack the picker on top of the message.
+                            var friendlytitles = {
+                                invalidfiletypewithaccepted: 'invalidfiletypetitle',
+                                filenametoolong: 'filenametoolongtitle',
+                            };
+                            if (friendlytitles[data.errorcode]) {
+                                // Problems with the chosen file are not really errors, so report them less scarily.
+                                var titlekey = friendlytitles[data.errorcode];
                                 Y.use('moodle-core-notification-alert', function() {
                                     return new M.core.alert({
-                                        title: M.util.get_string('invalidfiletypetitle', 'repository'),
+                                        title: M.util.get_string(titlekey, 'repository'),
                                         message: data.error,
                                     });
                                 });
@@ -700,13 +714,6 @@ M.core_filepicker.init = function(Y, options) {
                                 Y.use('moodle-core-notification-ajaxexception', function() {
                                     return new M.core.ajaxException(data);
                                 });
-                            }
-                            if (args.onerror) {
-                                args.onerror(id, data, p);
-                            } else {
-                                // Don't know what to do, so blank the dialogue to ensure it is not left in an inconsistent state.
-                                // This is not great. The user needs to re-click 'Upload file' to reset the display.
-                                this.fpnode.one('.fp-content').setContent('');
                             }
                             return;
                         } else {
