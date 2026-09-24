@@ -676,6 +676,9 @@ M.form_dndupload.init = function(Y, options) {
                 type = 'info'; // One of only two types excepted.
                 header = M.util.get_string('info', 'moodle');
             }
+            if (errorCode === 'filenametoolong') {
+                header = M.util.get_string('filenametoolongtitle', 'repository');
+            }
             if (errorCode === 'uploaderrorfoldersnotsupported') {
                 header = M.util.get_string('upload_error_folders_not_supported_title', 'repository_upload');
             }

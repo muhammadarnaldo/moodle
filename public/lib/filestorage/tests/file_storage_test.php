@@ -2114,6 +2114,21 @@ final class file_storage_test extends \advanced_testcase {
         $newfilename = $fs->get_unused_filename($contextid, $component, $filearea, $itemid, $filepath, 'Hurray! (1).php');
         $this->assertEquals('Hurray! (3).php', $newfilename);
 
+        // A name using the whole column has its base name trimmed so the suffix fits.
+        $file->filename = str_repeat('a', 251) . '.txt';
+        $this->assertInstanceOf('stored_file', $fs->create_file_from_string($file, 'content'));
+        $newfilename = $fs->get_unused_filename($contextid, $component, $filearea, $itemid, $filepath, $file->filename);
+        $this->assertSame(255, \core_text::strlen($newfilename));
+        $this->assertSame(str_repeat('a', 247) . ' (1).txt', $newfilename);
+
+        // A later duplicate must not reuse the trimmed name.
+        $file->filename = $newfilename;
+        $this->assertInstanceOf('stored_file', $fs->create_file_from_string($file, 'content'));
+        $maxlengthname = str_repeat('a', 251) . '.txt';
+        $newfilename = $fs->get_unused_filename($contextid, $component, $filearea, $itemid, $filepath, $maxlengthname);
+        $this->assertSame(255, \core_text::strlen($newfilename));
+        $this->assertSame(str_repeat('a', 247) . ' (2).txt', $newfilename);
+
         $this->expectException('coding_exception');
         $fs->get_unused_filename($contextid, $component, $filearea, $itemid, $filepath, '');
     }

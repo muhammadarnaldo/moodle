@@ -827,6 +827,7 @@ class page_requirements_manager {
                             ['renameto', 'repository'],
                             ['referencesexist', 'repository'],
                             ['select', 'repository'],
+                            ['filenametoolongtitle', 'repository'],
                         ],
                     ];
                     break;
@@ -886,6 +887,7 @@ class page_requirements_manager {
                             ['sizegb', 'moodle'], ['sizemb', 'moodle'], ['sizekb', 'moodle'], ['sizeb', 'moodle'],
                             ['maxareabytesreached', 'moodle'], ['serverconnection', 'error'],
                             ['changesmadereallygoaway', 'moodle'], ['complete', 'moodle'],
+                            ['filenametoolongtitle', 'repository'],
                             ['upload_error_folders_not_supported', 'repository_upload'],
                             ['upload_error_folders_not_supported_title', 'repository_upload'],
                         ],

@@ -184,6 +184,11 @@ class repository_upload extends repository {
             throw new moodle_exception('upload_error_invalid_file', 'repository_upload', '', $record->filename);
         }
 
+        // Validate file name length.
+        if (core_text::strlen($record->filename) > 255) {
+            throw new moodle_exception('filenametoolong', 'repository');
+        }
+
         if ($this->mimetypes != '*') {
             // Check filetype.
             $filemimetype = file_storage::mimetype($_FILES[$elname]['tmp_name'], $record->filename);
