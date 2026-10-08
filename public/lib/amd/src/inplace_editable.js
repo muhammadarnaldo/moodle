@@ -39,11 +39,28 @@ define(
         'core/loadingicon',
         'core/pending',
         'core/local/inplace_editable/events',
+        'core/toast',
     ],
-    function($, ajax, templates, notification, str, cfg, url, autocomplete, LoadingIcon, Pending, Events) {
+    function($, ajax, templates, notification, str, cfg, url, autocomplete, LoadingIcon, Pending, Events, Toast) {
 
         const removeSpinner = function(element) {
             element.find('.loading-icon').hide();
+        };
+
+        /**
+         * Announce the saved value to screen reader users.
+         *
+         * @param {string} displayvalue the rendered value returned by the web service
+         */
+        const announceValue = function(displayvalue) {
+            const node = $('<div>').html(displayvalue);
+            // Leave out any text that is only meant for screen readers, such as the activity type.
+            node.find('.accesshide, .visually-hidden').remove();
+            const text = node.text().trim();
+            if (text === '') {
+                return;
+            }
+            Toast.add(str.get_string('inplaceeditablesaved', 'core', text), {visuallyHidden: true});
         };
 
         /**
@@ -82,6 +99,7 @@ define(
                             templates.replaceNode(mainelement, newelement, js);
                             if (!silent) {
                                 newelement.find('[data-inplaceeditablelink]').focus();
+                                announceValue(data.displayvalue);
                             }
 
                             // Trigger updated event on the DOM element.
@@ -105,8 +123,12 @@ define(
                 });
         };
 
-        $('body').on('click keypress', '[data-inplaceeditable] [data-inplaceeditablelink]', function(e) {
+        $('body').on('click keypress keydown', '[data-inplaceeditable] [data-inplaceeditablelink]', function(e) {
             if (e.type === 'keypress' && e.keyCode !== 13) {
+                return;
+            }
+            // Space is handled on keydown so the page does not scroll.
+            if (e.type === 'keydown' && e.keyCode !== 32) {
                 return;
             }
             var editingEnabledPromise = new Pending('autocomplete-start-editing');
@@ -115,13 +137,15 @@ define(
             var target = $(this),
                 mainelement = target.closest('[data-inplaceeditable]');
 
-            var turnEditingOff = function(el) {
+            var turnEditingOff = function(el, restorefocus = true) {
                 el.find('input').off();
                 el.find('select').off();
                 el.html(el.attr('data-oldcontent'));
                 el.removeAttr('data-oldcontent');
                 el.removeClass('inplaceeditingon');
-                el.find('[data-inplaceeditablelink]').focus();
+                if (restorefocus) {
+                    el.find('[data-inplaceeditablelink]').focus();
+                }
 
                 // Re-enable any parent draggable attribute.
                 el.parents(`[data-inplace-in-draggable="true"]`)
@@ -181,9 +205,13 @@ define(
                             turnEditingOff(el);
                             updateValue(el, val);
                         }
-                        if ((e.type === 'keyup' && e.keyCode === 27) || e.type === 'focusout') {
+                        if (e.type === 'keyup' && e.keyCode === 27) {
                             // We need 'keyup' event for Escape because keypress does not work with Escape.
                             turnEditingOff(el);
+                        }
+                        if (e.type === 'focusout') {
+                            // Focus has already moved to another element (e.g. Tab), so leave it there.
+                            turnEditingOff(el, false);
                         }
                     });
                 });
@@ -225,9 +253,13 @@ define(
                         turnEditingOff(el);
                         updateValue(el, val);
                     }
-                    if ((e.type === 'keyup' && e.keyCode === 27) || e.type === 'focusout') {
+                    if (e.type === 'keyup' && e.keyCode === 27) {
                         // We need 'keyup' event for Escape because keypress does not work with Escape.
                         turnEditingOff(el);
+                    }
+                    if (e.type === 'focusout') {
+                        // Focus has already moved to another element (e.g. Tab), so leave it there.
+                        turnEditingOff(el, false);
                     }
                 });
             };

@@ -1187,6 +1187,7 @@ $string['indicator:readactions_help'] = 'This indicator represents the number of
 $string['indicator:userforumstracking'] = 'User is tracking forums';
 $string['indicator:userforumstracking_help'] = 'This indicator represents whether or not the student has tracking turned on in the forums.';
 $string['info'] = 'Information';
+$string['inplaceeditablesaved'] = 'Saved: {$a}';
 $string['inprogress'] = 'In progress';
 $string['insertcontentbefore'] = 'Insert content before \'{$a->activityname}\'';
 $string['insertcontentsection'] = 'Insert content in section \'{$a->sectionname}\'';
