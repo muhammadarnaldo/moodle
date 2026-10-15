@@ -2,5 +2,9 @@
   "ActivityIcon": {
     "eject": "safe",
     "wrap": "safe"
+  },
+  "local/cm/VisibilityDropdown": {
+    "eject": "risky",
+    "wrap": "risky"
   }
 }
