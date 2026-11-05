@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Class definition for the Recently accessed items block.
  *
@@ -20,7 +21,7 @@
  * @copyright  2018 Victor Deniz <victor@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+
 /**
  * Recently accessed items block class.
  *
@@ -42,15 +43,28 @@ class block_recentlyaccesseditems extends block_base {
      * @return stdClass contents of block
      */
     public function get_content() {
+        global $OUTPUT;
+
         if (isset($this->content)) {
             return $this->content;
         }
-        $renderable = new block_recentlyaccesseditems\output\main();
-        $renderer = $this->page->get_renderer('block_recentlyaccesseditems');
 
-        $this->content = new stdClass();
-        $this->content->text = $renderer->render($renderable);
-        $this->content->footer = '';
+        $props = [
+            'loadinglabel' => get_string('loading', 'core'),
+            'noitemslabel' => get_string('noitems', 'block_recentlyaccesseditems'),
+            'moreitemslabel' => get_string('moreitems', 'block_recentlyaccesseditems'),
+            'noitemsimgurl' => $OUTPUT
+                ->image_url('items', 'block_recentlyaccesseditems')
+                ->out(false),
+        ];
+
+        $this->content = (object) [
+            'text' => \core\output\html_writer::react_component(
+                '@moodle/lms/block_recentlyaccesseditems/RecentlyAccessedItems',
+                $props,
+            ),
+            'footer' => '',
+        ];
         return $this->content;
     }
 
@@ -60,6 +74,6 @@ class block_recentlyaccesseditems extends block_base {
      * @return array
      */
     public function applicable_formats() {
-        return array('my' => true);
+        return ['my' => true];
     }
 }

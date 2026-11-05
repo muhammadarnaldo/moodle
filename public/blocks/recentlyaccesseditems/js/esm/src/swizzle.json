@@ -1,0 +1,14 @@
+{
+  "EmptyState": {
+    "eject": "safe",
+    "wrap": "safe"
+  },
+  "RecentItem": {
+    "eject": "safe",
+    "wrap": "safe"
+  },
+  "RecentlyAccessedItems": {
+    "eject": "prohibited",
+    "wrap": "risky"
+  }
+}

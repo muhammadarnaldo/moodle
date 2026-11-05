@@ -14,33 +14,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A javascript module to handle user ajax actions.
+ * Data access for the Recently accessed items block.
  *
  * @module     block_recentlyaccesseditems/repository
  * @copyright  2018 Victor Deniz <victor@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['core/ajax'], function(Ajax) {
 
-    /**
-     * Get the list of items that the user has most recently accessed.
-     *
-     * @method getRecentItems
-     * @param {int} limit Only return this many results
-     * @return {promise} Resolved with an array of items
-     */
-    var getRecentItems = function(limit) {
-        var args = {};
-        if (typeof limit !== 'undefined') {
-            args.limit = limit;
-        }
-        var request = {
-            methodname: 'block_recentlyaccesseditems_get_recent_items',
-            args: args
-        };
-        return Ajax.call([request])[0];
-    };
-    return {
-        getRecentItems: getRecentItems
-    };
+import {fetchOne} from '@moodle/lms/core/ajax';
+import type {RecentItemData} from '@moodle/lms/block_recentlyaccesseditems/types';
+
+/**
+ * Fetch the current user's most recently accessed items in the server's order.
+ *
+ * @param limit Maximum number of items to return.
+ * @returns Recently accessed items. Request failures are propagated to the caller.
+ */
+export const getRecentItems = (limit: number): Promise<RecentItemData[]> => fetchOne<RecentItemData[]>({
+    methodname: 'block_recentlyaccesseditems_get_recent_items',
+    args: {limit},
 });
